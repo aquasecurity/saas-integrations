@@ -152,7 +152,7 @@ var event = function(settings, callback) {
 				email: msg,
 				sms: 'Event Alert: account: ' + settings.account_name + ' action: ' + settings.event.action,
 			}),
-			Subject: 'CloudSploit Event Alert for AWS account: ' + settings.account_name + ' action: ' + event.action
+			Subject: 'CloudSploit Event Alert for AWS account: ' + settings.account_name + ' action: ' + settings.event.action
 		};
 		
 		raw(topic, params, function(err){
