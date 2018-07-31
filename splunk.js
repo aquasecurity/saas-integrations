@@ -35,9 +35,6 @@ var result = function(settings, callback) {
 	if (!settings.endpoints) return callback('No settings endpoints provided');
 	if (!settings.raw_results) return callback('No raw_results provided');
 
-	var payload = {
-        'event': settings.raw_results
-	};
 
 	async.each(settings.endpoints, function(endpoint, cb){
 		// Splunk endpoints are delimited by ":::" such as:
@@ -49,9 +46,20 @@ var result = function(settings, callback) {
 
 		if (!splunkEndpoint || !splunkToken) return cb();
 
-		raw(splunkEndpoint, splunkToken, payload, function(err){
-			cb(err);
-		});
+        timestamp = new Date(settings.timestamp);
+        epoch = timestamp.getTime()/1000;
+
+        async.each(settings.raw_results, function(result, cb){
+            var payload = {
+                'time': epoch,
+                'event': result
+            };
+            raw(splunkEndpoint, splunkToken, payload, function(err){
+                cb(err);
+            });
+        }, function(err){
+            cb(err);
+        });
 	}, function(err){
 		callback(err);
 	});
@@ -94,7 +102,11 @@ var alert = function(settings, callback) {
 			  '; Plugin: ' + settings.test_name +
 			  '; Affected Resources: ' + resourcesMsg;
 
+    timestamp = new Date(settings.timestamp);
+    epoch = timestamp.getTime()/1000;
+
 	var payload = {
+        'time': epoch,
         'event': msg
 	};
 
@@ -145,7 +157,11 @@ var event = function(settings, callback) {
     		  '; Original Event: ' +
     		  JSON.stringify(settings.original);
 
+    timestamp = new Date(settings.timestamp);
+    epoch = timestamp.getTime()/1000;
+
 	var payload = {
+        'time': epoch,
         'event': msg
 	};
 
