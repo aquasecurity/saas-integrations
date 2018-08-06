@@ -6,18 +6,29 @@ var raw = function(endpoint, token, payload, callback) {
 	if (!token) return callback('No Splunk token provided');
 	if (!payload) return callback('No Splunk payload provided');
 
+    var payloadStr = '';
+    if (Array.isArray(payload)) {
+        for (var i = 0; i < payload.length; i++){
+            payloadStr += JSON.stringify(payload[i]);
+        }
+    }
+    else {
+        payloadStr = JSON.stringify(payload);
+    }
+
 	request({
 	    url: endpoint,
 	    method: 'POST',
 	    headers: {
-	        Authorization: 'Splunk ' + token
+	        'Authorization': 'Splunk ' + token,
+            'Content-type': 'application/json' 
 	    },
-	    json: payload
+	    body: payloadStr
 	}, function(err, response, body){
 	    if (err) return callback(err);
 
 	    if (!response || !response.statusCode ) return callback('Invalid response from Splunk');
-	    callback();
+	    callback(response);
 	});
 };
 
@@ -35,9 +46,6 @@ var result = function(settings, callback) {
 	if (!settings.endpoints) return callback('No settings endpoints provided');
 	if (!settings.raw_results) return callback('No raw_results provided');
 
-	var payload = {
-        'event': settings.raw_results
-	};
 
 	async.each(settings.endpoints, function(endpoint, cb){
 		// Splunk endpoints are delimited by ":::" such as:
@@ -49,9 +57,19 @@ var result = function(settings, callback) {
 
 		if (!splunkEndpoint || !splunkToken) return cb();
 
-		raw(splunkEndpoint, splunkToken, payload, function(err){
-			cb(err);
-		});
+        timestamp = new Date(settings.timestamp);
+        epoch = timestamp.getTime()/1000;
+
+        results = []
+        for (var i = 0; i < settings.raw_results.length; i++){
+            results.push({
+                'time': epoch,
+                'event': settings.raw_results[i]
+            });
+        }
+        raw(splunkEndpoint, splunkToken, results, function(err){
+            cb(err);
+        });
 	}, function(err){
 		callback(err);
 	});
@@ -94,7 +112,11 @@ var alert = function(settings, callback) {
 			  '; Plugin: ' + settings.test_name +
 			  '; Affected Resources: ' + resourcesMsg;
 
+    timestamp = new Date(settings.timestamp);
+    epoch = timestamp.getTime()/1000;
+
 	var payload = {
+        'time': epoch,
         'event': msg
 	};
 
@@ -145,7 +167,11 @@ var event = function(settings, callback) {
     		  '; Original Event: ' +
     		  JSON.stringify(settings.original);
 
+    timestamp = new Date(settings.timestamp);
+    epoch = timestamp.getTime()/1000;
+
 	var payload = {
+        'time': epoch,
         'event': msg
 	};
 
