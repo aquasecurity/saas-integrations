@@ -57,14 +57,15 @@ var result = function(settings, callback) {
 
 		if (!splunkEndpoint || !splunkToken) return cb();
 
-        timestamp = new Date(settings.timestamp);
-        epoch = timestamp.getTime()/1000;
+        var timestamp = new Date(settings.timestamp);
+        var epoch = timestamp.getTime()/1000;
 
         results = []
         for (var i = 0; i < settings.raw_results.length; i++){
             results.push({
                 'time': epoch,
-                'event': settings.raw_results[i]
+                'event': settings.raw_results[i],
+                'sourcetype': 'cloudsploit:scan_results'
             });
         }
         raw(splunkEndpoint, splunkToken, results, function(err){
@@ -94,30 +95,32 @@ var alert = function(settings, callback) {
 	if (!settings.account_name) return callback('No settings account_name provided');
 	if (!settings.test_name) return callback('No settings test_name provided');
 	if (!settings.test_description) return callback('No settings test_description provided');
-	if (!settings.scan_id) return callback('No settings test_description provided');
+	if (!settings.scan_id) return callback('No settings scan_id provided');
 	if (settings.result !== 1 && settings.result !== 2) return callback('Settings result is not a valid number');
 
 	var warnOrFail = settings.result === 1 ? 'WARN' : 'FAIL';
 
 	if (settings.resources && settings.resources.length) {
-		var resourcesMsg = settings.resources.join(', ');
+		var resources = settings.resources;
 	} else {
-		var resourcesMsg = 'N/A';
+		var resources = [];
 	}
 
-	var msg = '[' + warnOrFail + '] Connected AWS account: ' + settings.account_name +
-			  ' is in a ' + warnOrFail + ' state for the plugin: ' + settings.test_name +
-			  '; Account: ' + settings.account_name +
-			  '; Status: ' + warnOrFail +
-			  '; Plugin: ' + settings.test_name +
-			  '; Affected Resources: ' + resourcesMsg;
+    var event = { 
+        'status': warnOrFail,
+        'account': settings.account_name,
+        'plugin': settings.test_name,
+        'affected_resources': resources,
+        'test_description': settings.test_description,
+        'scan_id': settings.scan_id};
 
-    timestamp = new Date(settings.timestamp);
-    epoch = timestamp.getTime()/1000;
+    var timestamp = new Date(settings.timestamp);
+    var epoch = timestamp.getTime()/1000;
 
 	var payload = {
         'time': epoch,
-        'event': msg
+        'event': event,
+        'sourcetype': 'cloudsploit:alert'
 	};
 
     async.each(settings.endpoints, function(endpoint, cb){
@@ -157,22 +160,23 @@ var event = function(settings, callback) {
     if (settings.event.result !== 1 && settings.event.result !== 2) return callback('Settings event result is not a valid number');
 
     var warnOrFail = settings.event.result === 1 ? 'WARN' : 'FAIL';
-
-    var msg = '[' + warnOrFail + '] Account: ' + settings.account_name +
-    		  '; Action: ' + settings.event.action +
-    		  '; Region: ' + settings.event.region +
-    		  '; User: ' + settings.event.caller +
-    		  '; IP Address: ' + settings.event.ip_address +
-    		  '; Message: ' + settings.event.message +
-    		  '; Original Event: ' +
-    		  JSON.stringify(settings.original);
-
-    timestamp = new Date(settings.timestamp);
-    epoch = timestamp.getTime()/1000;
+    
+    var event = { 
+        'severity': warnOrFail,
+        'account': settings.account_name,
+        'region': settings.event.region,
+        'user': settings.event.caller,
+        'ip_address': settings.event.ip_address,
+        'message': settings.event.message,
+        'original_event': settings.original};
+    
+    var timestamp = new Date(settings.timestamp);
+    var epoch = timestamp.getTime()/1000;
 
 	var payload = {
         'time': epoch,
-        'event': msg
+        'event': event,
+        'sourcetype': 'cloudsploit:event'
 	};
 
     async.each(settings.endpoints, function(endpoint, cb){
