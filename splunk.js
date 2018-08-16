@@ -28,7 +28,7 @@ var raw = function(endpoint, token, payload, callback) {
 	    if (err) return callback(err);
 
 	    if (!response || !response.statusCode ) return callback('Invalid response from Splunk');
-	    callback(response);
+	    callback(null, response);
 	});
 };
 
@@ -62,11 +62,14 @@ var result = function(settings, callback) {
 
         results = []
         for (var i = 0; i < settings.raw_results.length; i++){
-            results.push({
-                'time': epoch,
+            var scan_result = {
                 'event': settings.raw_results[i],
                 'sourcetype': 'cloudsploit:scan_results'
-            });
+            };
+            if(epoch){
+                scan_result.time = epoch
+            }
+            results.push(scan_result);
         }
         raw(splunkEndpoint, splunkToken, results, function(err){
             cb(err);
@@ -118,10 +121,12 @@ var alert = function(settings, callback) {
     var epoch = timestamp.getTime()/1000;
 
 	var payload = {
-        'time': epoch,
         'event': event,
         'sourcetype': 'cloudsploit:alert'
 	};
+    if(epoch) {
+        payload.time = epoch;
+    }
 
     async.each(settings.endpoints, function(endpoint, cb){
     	// Splunk endpoints are delimited by ":::" such as:
@@ -174,10 +179,12 @@ var event = function(settings, callback) {
     var epoch = timestamp.getTime()/1000;
 
 	var payload = {
-        'time': epoch,
         'event': event,
         'sourcetype': 'cloudsploit:event'
 	};
+    if(epoch) {
+        payload.time = epoch;
+    }
 
     async.each(settings.endpoints, function(endpoint, cb){
     	// Splunk endpoints are delimited by ":::" such as:
