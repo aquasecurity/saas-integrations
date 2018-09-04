@@ -45,7 +45,12 @@ var result = function(settings, callback) {
 	if (!settings) return callback('No settings object provided');
 	if (!settings.endpoints) return callback('No settings endpoints provided');
 	if (!settings.raw_results) return callback('No raw_results provided');
-
+	if (!settings.account_name) return callback('No account_name provided');
+	if (!settings.num_pass) return callback('No num_pass provided');
+	if (!settings.num_warn) return callback('No num_warn provided');
+	if (!settings.num_fail) return callback('No num_fail provided');
+	if (!settings.num_unknown) return callback('No num_unknown provided');
+	if (!settings.num_new_risks) return callback('No num_new_risks provided');
 
 	async.each(settings.endpoints, function(endpoint, cb){
 		// Splunk endpoints are delimited by ":::" such as:
@@ -67,8 +72,14 @@ var result = function(settings, callback) {
                 'sourcetype': 'cloudsploit:scan_results'
             };
             if(epoch){
-                scan_result.time = epoch
+                scan_result.time = epoch;
             }
+            scan_result.event.account_name = settings.account_name;
+            scan_result.event.num_pass = settings.num_pass;
+            scan_result.event.num_warn = settings.num_warn;
+            scan_result.event.num_fail = settings.num_fail;
+            scan_result.event.num_unknown = settings.num_unknown;
+            scan_result.event.num_new_risks = settings.num_new_risks;
             results.push(scan_result);
         }
         raw(splunkEndpoint, splunkToken, results, function(err){
