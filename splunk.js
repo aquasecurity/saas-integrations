@@ -46,11 +46,11 @@ var result = function(settings, callback) {
 	if (!settings.endpoints) return callback('No settings endpoints provided');
 	if (!settings.raw_results) return callback('No raw_results provided');
 	if (!settings.account_name) return callback('No account_name provided');
-	if (!settings.num_pass) return callback('No num_pass provided');
-	if (!settings.num_warn) return callback('No num_warn provided');
-	if (!settings.num_fail) return callback('No num_fail provided');
-	if (!settings.num_unknown) return callback('No num_unknown provided');
-	if (!settings.num_new_risks) return callback('No num_new_risks provided');
+	if (typeof settings.num_pass !== 'number') return callback('Settings num_pass is not a valid number');
+    if (typeof settings.num_warn !== 'number') return callback('Settings num_warn is not a valid number');
+    if (typeof settings.num_fail !== 'number') return callback('Settings num_fail is not a valid number');
+    if (typeof settings.num_unknown !== 'number') return callback('Settings num_unknown is not a valid number');
+    if (typeof settings.num_new_risks !== 'number') return callback('Settings num_new_risks is not a valid number');
 
 	async.each(settings.endpoints, function(endpoint, cb){
 		// Splunk endpoints are delimited by ":::" such as:
