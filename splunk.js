@@ -65,23 +65,48 @@ var result = function(settings, callback) {
         var timestamp = new Date(settings.timestamp);
         var epoch = timestamp.getTime()/1000;
 
-        results = []
-        for (var i = 0; i < settings.raw_results.length; i++){
-            var scan_result = {
-                'event': settings.raw_results[i],
-                'sourcetype': 'cloudsploit:scan_results'
-            };
-            if(epoch){
-                scan_result.time = epoch;
+        results = [];
+
+        if (settings.flatten_results) {
+            for (var i = 0; i < settings.raw_results.length; i++){
+                var testLevel = settings.raw_results[i];
+
+                for (var j = 0; j < testLevel.results.length; j++){
+                    var resultLevel = testLevel.results[j];
+
+                    var scan_result = {
+                        'event': resultLevel,
+                        'sourcetype': 'cloudsploit:scan_results'
+                    };
+                    if(epoch){
+                        scan_result.time = epoch;
+                    }
+                    scan_result.event.account_name = settings.account_name;
+                    scan_result.event.category = testLevel.category;
+                    scan_result.event.test_id = testLevel.id;
+                    scan_result.event.title = testLevel.title;
+                    results.push(scan_result);
+                }
             }
-            scan_result.event.account_name = settings.account_name;
-            scan_result.event.num_pass = settings.num_pass;
-            scan_result.event.num_warn = settings.num_warn;
-            scan_result.event.num_fail = settings.num_fail;
-            scan_result.event.num_unknown = settings.num_unknown;
-            scan_result.event.num_new_risks = settings.num_new_risks;
-            results.push(scan_result);
+        } else {
+            for (var i = 0; i < settings.raw_results.length; i++){
+                var scan_result = {
+                    'event': settings.raw_results[i],
+                    'sourcetype': 'cloudsploit:scan_results'
+                };
+                if(epoch){
+                    scan_result.time = epoch;
+                }
+                scan_result.event.account_name = settings.account_name;
+                scan_result.event.num_pass = settings.num_pass;
+                scan_result.event.num_warn = settings.num_warn;
+                scan_result.event.num_fail = settings.num_fail;
+                scan_result.event.num_unknown = settings.num_unknown;
+                scan_result.event.num_new_risks = settings.num_new_risks;
+                results.push(scan_result);
+            }
         }
+
         raw(splunkEndpoint, splunkToken, results, function(err){
             cb(err);
         });
