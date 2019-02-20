@@ -78,13 +78,13 @@ var result = function(settings, callback) {
                         'event': resultLevel,
                         'sourcetype': 'cloudsploit:scan_results'
                     };
-                    if(epoch){
-                        scan_result.time = epoch;
-                    }
+                    if (epoch) scan_result.time = epoch;
+                    if (settings.account_number) scan_result.event.account_number = settings.account_number;
                     scan_result.event.account_name = settings.account_name;
                     scan_result.event.category = testLevel.category;
                     scan_result.event.test_id = testLevel.id;
                     scan_result.event.title = testLevel.title;
+                    scan_result.event.severity = testLevel.severity;
                     results.push(scan_result);
                 }
             }
@@ -94,9 +94,8 @@ var result = function(settings, callback) {
                     'event': settings.raw_results[i],
                     'sourcetype': 'cloudsploit:scan_results'
                 };
-                if(epoch){
-                    scan_result.time = epoch;
-                }
+                if (epoch) scan_result.time = epoch;
+                if (settings.account_number) scan_result.event.account_number = settings.account_number;
                 scan_result.event.account_name = settings.account_name;
                 scan_result.event.num_pass = settings.num_pass;
                 scan_result.event.num_warn = settings.num_warn;
