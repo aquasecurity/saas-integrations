@@ -61,13 +61,13 @@ This function will be called to deliver specific alerts which have been pre-conf
 * `test_name`
     * The user-friendly name of the test for which the alert was triggered (e.g "CloudFront HTTPS Only")
 * `test_description`
-	* A description of the test that was run
+    * A description of the test that was run
 * `scan_id`
     * The ID of the scan containing the result. This can be used to include a link to the full report.
 * `resources` (optional)
     * If provided, this will be an array of affected AWS resources, which can be included if the integration allows for additional details.
 * `result`
-	* Either a `1` if the test was a `WARN` or `2` if a `FAIL`
+    * Either a `1` if the test was a `WARN` or `2` if a `FAIL`
 
 The integration should craft a clear and concise message and description that will be delivered to the endpoint. Some integrations allow more flexibility in the amount of data that can be sent. For example, an SNS topic post must be relatively short in order to fit within the character limit for SMS delivery, while OpsGenie or PagerDuty event triggers can contain many KB of additional details.
 
@@ -86,7 +86,7 @@ This function will be called when CloudSploit Events triggers an alert based on 
 * `original`
     * The entire original event delivered to CloudSploit via AWS CloudWatch Events.
 * `result`
-	* Either a `1` if the test was a `WARN` or `2` if a `FAIL`
+    * Either a `1` if the test was a `WARN` or `2` if a `FAIL`
 
 The integration should craft a clear and concise alert to be sent to the integration outlining the event details and why CloudSploit marked it as a security risk (warn or fail).
 
