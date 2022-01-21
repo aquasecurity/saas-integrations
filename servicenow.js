@@ -183,6 +183,82 @@ var event = function(settings, callback) {
     });
 };
 
+/*
+ * remediation_notification - called to send a remediation notification
+ * arguments:
+ *     settings: an object containing the following properties:
+ *         - endpoints -> array of servicenow accounts information
+    *          - accountId
+    *          - authString
+ *         - cloud
+ *         - account_id
+ *         - account_name
+ *         - remediated_resources
+ *         - remediation_type
+ *         - permissions
+ *         - remediation_id
+ *         - result
+ *         - caller
+ *         - region
+ *         - action
+ *         - ip_address
+ *         - message
+ *         - created
+ *         - account_type
+ *  *      - isSecurityIncident
+ *         - severity
+ *     callback
+*/
+var remediation_notification = function(settings, callback) {
+    if (!settings) return callback('No settings object provided');
+    if (!settings.endpoints) return callback('No settings endpoints provided');
+    if (!settings.names) return callback('No settings names provided');
+    if (!settings.cloud) return callback('No settings cloud provided');
+    if (!settings.account_id) return callback('No settings account_id provided');
+    if (!settings.account_name) return callback('No settings account_name provided');
+    if (!settings.remediated_resources) return callback('No settings remediated resources provided');
+    if (!settings.remediation_type) return callback('No settings remediation type provided');
+    if (!settings.permissions) return callback('No settings permissions provided');
+    if (!settings.remediation_id) return callback('No settings remediation_id provided');
+    if (!settings.account_type) return callback('No settings account type provided');
+    if (settings.result !== 0 && settings.result !== 1) return callback('Settings result is not a valid number');
+    if (!settings.created) return callback('No settings created provided');
+    if (settings.severity !== 1 && settings.severity !== 2 && settings.severity !== 3) return callback('Settings severity is not a valid number');
+    if (!settings.isSecurityIncident) return callback('No settings isSecurityIncident provided');
+
+    var type = (settings.type == 'dryrun') ? 'Dry run: ' : '';
+    var verb = (settings.result == 0) ? 'succeeded' : 'failed';
+    var verbAction = (settings.event_id) ? 'auto-remediation' : 'manual-remediation';
+
+    var msg = type + 'Aqua Wave CSPM ' + verbAction + ' ' + verb +
+        `\nFor ${settings.account_type}: ` + settings.account_name + ' (' + settings.account_id + ')' +
+        '\n\nClick here to view: ' + config.AQUA_CONSOLE_URL + '/actions?remediation=' + settings.remediation_id +
+        '\n\n' + (settings.message ? 'Auto-remediation triggered by event: ' + settings.message : 'Manual remediation triggered via the Aqua CSPM console') +
+        '\nRemediation Detail' +
+        `\n${settings.account_type}:` + settings.account_name +
+        '\nCloud:' + settings.cloud.toUpperCase() +
+        '\nAction:' + settings.permissions +
+        '\nResources:' + settings.remediated_resources;
+
+    var payload = {
+        [isSecurityIncident ? 'businessCriticality' : 'impact']: settings.severity,
+        [isSecurityIncident ? 'priority' : 'urgency']: settings.severity,
+        shortDescription: `Aqua Wave CSPM ${verbAction} ${verb} ${settings.account_name} (${settings.account_id})`,
+        description: msg
+    };
+
+    async.eachLimit(settings.endpoints, 5, function(endpoint, cb){
+        let integrationName = settings.names[settings.endpoints.indexOf(endpoint)];
+
+        raw(endpoint, payload, function(err){
+            settings.remediation_file['integrations'].push({integration:integrationName, status:(err ? 2 : 0), host:topic, err:(err ? err : '')});
+            cb();
+        });
+    }, function(err){
+        callback(err);
+    });
+};
+
 var testConnection = function(integration, callback) {
     if (!integration) return callback('No integration object provided');
     if (!integration.servicenow_apikey) return callback('No servicenow api key found');
@@ -206,5 +282,6 @@ module.exports = {
     result: result,
     alert: alert,
     event: event,
+    remediation_notification: remediation_notification,
     testConnection: testConnection
 };
