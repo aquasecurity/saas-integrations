@@ -46,7 +46,7 @@ var raw = function(apiKey, payload, callback) {
     *          - authString
  *         - account_name
  *         - num_pass, num_warn, num_fail, num_unknown, num_new_risks
- *         - isSecurityIncident
+ *         - isSecurityIncident(optional)
  *         - severity
  *     callback
 */
@@ -60,14 +60,13 @@ var result = function(settings, callback) {
     if (typeof settings.num_unknown !== 'number') return callback('Settings num_unknown is not a valid number');
     if (typeof settings.num_new_risks !== 'number') return callback('Settings num_new_risks is not a valid number');
     if (typeof settings.severity !== 'number') return callback('Settings severity is not a valid number');
-    if (settings.severity !== 1 && settings.severity !== 2 && settings.severity !== 3) return callback('Settings severity is not a valid number');
-    if (!settings.isSecurityIncident) return callback('No settings isSecurityIncident provided');
+    if (![1, 2, 3].includes(settings.severity)) return callback('Settings severity is not a valid number');
 
     var description = 'Results: ' + settings.num_pass + ' PASS; ' + settings.num_warn + ' WARN; ' + settings.num_fail + ' FAIL; ' + settings.num_unknown + ' UNKNOWN; ' + settings.num_new_risks + ' NEW';
 
     var payload = {
-        [isSecurityIncident ? 'businessCriticality' : 'impact']: settings.severity,
-        [isSecurityIncident ? 'priority' : 'urgency']: settings.severity,
+        [settings.isSecurityIncident ? 'businessCriticality' : 'impact']: settings.severity,
+        [settings.isSecurityIncident ? 'priority' : 'urgency']: settings.severity,
         shortDescription: '[INFO] New Scan for: ' + settings.account_name,
         description
     };
@@ -101,7 +100,7 @@ var result = function(settings, callback) {
  *         - resources
  *         - account_type
  *         - cloud
- *         - isSecurityIncident
+ *         - isSecurityIncident(optional)
  *         - severity
  *     callback
 */
@@ -115,14 +114,13 @@ var alert = function(settings, callback) {
     if (!settings.cloud) return callback('No settings cloud provided');
     if (!settings.account_type) return callback('No settings account type provided');
     if (settings.result !== 1 && settings.result !== 2) return callback('Settings result is not a valid number');
-    if (settings.severity !== 1 && settings.severity !== 2 && settings.severity !== 3) return callback('Settings severity is not a valid number');
-    if (!settings.isSecurityIncident) return callback('No settings isSecurityIncident provided');
+    if (![1, 2, 3].includes(settings.severity)) return callback('Settings severity is not a valid number');
 
     var description = 'Affected Resources: ' + settings.resources.join(', ');
 
     var payload = {
-        [isSecurityIncident ? 'businessCriticality' : 'impact']: settings.severity,
-        [isSecurityIncident ? 'priority' : 'urgency']: settings.severity,
+        [settings.isSecurityIncident ? 'businessCriticality' : 'impact']: settings.severity,
+        [settings.isSecurityIncident ? 'priority' : 'urgency']: settings.severity,
         shortDescription: message,
         description,
     };
@@ -153,7 +151,7 @@ var alert = function(settings, callback) {
  *         - original
  *         - account_type
  *         - cloud
- *         - isSecurityIncident
+ *         - isSecurityIncident(optional)
  *     callback
 */
 var event = function(settings, callback) {
@@ -164,12 +162,11 @@ var event = function(settings, callback) {
     if (!settings.original) return callback('No settings original provided');
     if (!settings.account_type) return callback('No settings account type provided');
     if (settings.event.result !== 1 && settings.event.result !== 2) return callback('Settings event result is not a valid number');
-    if (settings.severity !== 1 && settings.severity !== 2 && settings.severity !== 3) return callback('Settings severity is not a valid number');
-    if (!settings.isSecurityIncident) return callback('No settings isSecurityIncident provided');
+    if (![1, 2, 3].includes(settings.severity)) return callback('Settings severity is not a valid number');
 
     var payload = {
-        [isSecurityIncident ? 'businessCriticality' : 'impact']: settings.severity,
-        [isSecurityIncident ? 'priority' : 'urgency']: settings.severity,
+        [settings.isSecurityIncident ? 'businessCriticality' : 'impact']: settings.severity,
+        [settings.isSecurityIncident ? 'priority' : 'urgency']: settings.severity,
         shortDescription: `Aqua Wave CSPM Event Alert for ${settings.cloud} ${settings.account_type}: ${settings.account_name} action: ${settings.event.action}`,
         description: `${settings.account_type}: ` + settings.account_name + '; Action: ' + settings.event.action + '; Region: ' + settings.event.region + '; User: ' + settings.event.caller + '; IP Address: ' + settings.event.ip_address + '; Message: ' + settings.event.message + '; Original: ' + settings.original
     };
@@ -223,8 +220,7 @@ var remediation_notification = function(settings, callback) {
     if (!settings.account_type) return callback('No settings account type provided');
     if (settings.result !== 0 && settings.result !== 1) return callback('Settings result is not a valid number');
     if (!settings.created) return callback('No settings created provided');
-    if (settings.severity !== 1 && settings.severity !== 2 && settings.severity !== 3) return callback('Settings severity is not a valid number');
-    if (!settings.isSecurityIncident) return callback('No settings isSecurityIncident provided');
+    if (![1, 2, 3].includes(settings.severity)) return callback('Settings severity is not a valid number');
 
     var type = (settings.type == 'dryrun') ? 'Dry run: ' : '';
     var verb = (settings.result == 0) ? 'succeeded' : 'failed';
@@ -241,8 +237,8 @@ var remediation_notification = function(settings, callback) {
         '\nResources:' + settings.remediated_resources;
 
     var payload = {
-        [isSecurityIncident ? 'businessCriticality' : 'impact']: settings.severity,
-        [isSecurityIncident ? 'priority' : 'urgency']: settings.severity,
+        [settings.isSecurityIncident ? 'businessCriticality' : 'impact']: settings.severity,
+        [settings.isSecurityIncident ? 'priority' : 'urgency']: settings.severity,
         shortDescription: `Aqua Wave CSPM ${verbAction} ${verb} ${settings.account_name} (${settings.account_id})`,
         description: msg
     };
