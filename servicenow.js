@@ -71,13 +71,8 @@ var result = function(settings, callback) {
         description
     };
 
-    async.eachLimit(settings.account, 5, function(account, cb){
-        var apiKey = {
-            accountId: account.accountId,
-            authString: account.authString
-        };
-
-        raw(apiKey, payload, function(err){
+    async.eachLimit(settings.endpoints, 5, function(endpoint, cb){
+        raw(endpoint, payload, function(err){
             cb(err);
         });
     }, function(err){
@@ -125,13 +120,8 @@ var alert = function(settings, callback) {
         description,
     };
 
-    async.eachLimit(settings.accounts, 5, function(account, cb){
-        var apiKey = {
-            accountId: account.accountId,
-            authString: account.authString
-        };
-
-        raw(apiKey, payload, function(err){
+    async.eachLimit(settings.endpoints, 5, function(endpoint, cb){
+        raw(endpoint, payload, function(err){
             cb(err);
         });
     }, function(err){
@@ -257,14 +247,13 @@ var remediation_notification = function(settings, callback) {
 
 var testConnection = function(integration, callback) {
     if (!integration) return callback('No integration object provided');
-    if (!integration.servicenow_apikey) return callback('No servicenow api key found');
 
     var payload = {
         shortDescription: 'Connection test',
         description: 'Testing connection with the servicenow api',
     };
 
-    raw(integration.servicenow_apikey, payload, function(err, result){
+    raw(integration, payload, function(err, result){
         if (err) {
             callback(err);
         } else {
